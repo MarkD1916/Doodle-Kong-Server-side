@@ -9,8 +9,10 @@ import com.example.server
 import com.example.session.DrawingSession
 import com.example.util.Constants.TYPE_ANNOUNCEMENT
 import com.example.util.Constants.TYPE_CHAT_MESSAGE
+import com.example.util.Constants.TYPE_CHOSEN_WORD
 import com.example.util.Constants.TYPE_DRAW_DATA
 import com.example.util.Constants.TYPE_JOIN_ROOM_HANDSHAKE
+import com.example.util.Constants.TYPE_PHASE_CHANGE
 import com.google.gson.JsonParser
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -48,6 +50,10 @@ fun Route.gameWebSocketRoute() {
                         room.broadcastToAllExcept(message, clientId)
                     }
                 }
+                is ChosenWord -> {
+                    val room = server.rooms[payload.roomName] ?: return@standardWebSocket
+                    room.setWordAndSwitchToGameRunning(payload.chosenWord)
+                }
                 is ChatMessage -> {
 
                 }
@@ -81,6 +87,8 @@ fun Route.standardWebSocket(
                         TYPE_DRAW_DATA -> DrawData::class.java
                         TYPE_ANNOUNCEMENT -> Announcement::class.java
                         TYPE_JOIN_ROOM_HANDSHAKE -> JoinRoomHandshake::class.java
+                        TYPE_PHASE_CHANGE -> PhaseChange::class.java
+                        TYPE_CHOSEN_WORD -> ChosenWord::class.java
                         else -> BaseModel::class.java
                     }
                     val payload = gson.fromJson(message, type)
